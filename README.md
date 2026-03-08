@@ -47,8 +47,7 @@ options:
   --include INCLUDE [INCLUDE ...]
                         Patterns of .tex files to include (e.g. main.tex chapters/*.tex)
   --exclude EXCLUDE [EXCLUDE ...]
-                        Patterns of .tex files or directories to exclude (e.g. build/*
-                        old_versions/*)
+                        Patterns of .tex files or directories to exclude (e.g. build/* old_versions/*)
   -m, --move-to DIR     Move unused images to this directory instead of just listing them
   -d, --delete          Permanently delete unused images from the disk
   --dry-run             Show what would happen without making any changes to the filesystem
