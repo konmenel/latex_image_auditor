@@ -195,16 +195,17 @@ def main():
         move_base = Path(args.move_to).resolve()
         for item in unused:
             try:
-                rel_to_img_dir = item.relative_to(img_dir)
-                dest_path = move_base / rel_to_img_dir
+                item_rel_to_root = item.relative_to(root)
+                dest_path = move_base / item_rel_to_root
+                dest_path_rel_to_root = dest_path.relative_to(root)
                 
                 if args.dry_run:
-                    print(f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would move: {rel_to_img_dir} -> {dest_path}")
+                    print(f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would move: {item_rel_to_root} -> {dest_path_rel_to_root}")
                 else:
                     dest_path.parent.mkdir(parents=True, exist_ok=True)
                     shutil.move(str(item), str(dest_path))
                     if args.verbose:
-                        print(f" {CLR['GREEN']}MOVED{CLR['ENDC']} {rel_to_img_dir}")
+                        print(f" {CLR['GREEN']}MOVED{CLR['ENDC']} {item_rel_to_root} -> {dest_path_rel_to_root}")
             except Exception as e:
                 print(f" {CLR['FAIL']}ERROR{CLR['ENDC']} Could not move {item.name}: {e}")
         
