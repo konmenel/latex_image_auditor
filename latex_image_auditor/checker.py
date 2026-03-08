@@ -211,7 +211,7 @@ def main():
         if not args.dry_run:
             print(f"{CLR['GREEN']}Quarantine complete: structure preserved in {move_base}{CLR['ENDC']}")
 
-    return 1
+    return 0
 
 
 if __name__ == "__main__":
