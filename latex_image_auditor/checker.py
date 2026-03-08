@@ -61,6 +61,11 @@ def create_parser():
         help="Permanently delete unused images from the disk",
     )
     parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would happen without making any changes to the filesystem",
+    )
+    parser.add_argument(
         "-y",
         "--yes",
         action="store_true",
@@ -112,15 +117,12 @@ def main():
     filtered_tex = []
 
     for tf in all_tex_files:
-        # Get path relative to root for pattern matching
         rel_path = str(tf.relative_to(root))
         
-        # Handle --include logic
         if args.include:
             if not any(fnmatch.fnmatch(rel_path, pat) for pat in args.include):
                 continue
         
-        # Handle --exclude logic
         if args.exclude:
             if any(fnmatch.fnmatch(rel_path, pat) for pat in args.exclude):
                 continue
@@ -163,8 +165,11 @@ def main():
         print(f" {CLR['WARNING']}UNUSED{CLR['ENDC']} {item.relative_to(root)}")
     print("-" * 60)
 
+    if args.dry_run:
+        print(f"{CLR['BLUE']}{CLR['BOLD']}DRY RUN MODE ENABLED - No changes will be saved.{CLR['ENDC']}")
+
     if args.delete:
-        if not args.yes:
+        if not args.yes and not args.dry_run:
             confirm = input(
                 f"{CLR['BOLD']}{CLR['FAIL']}DANGER:{CLR['ENDC']} Delete {len(unused)} files? [y/N]: "
             ).lower()
@@ -174,32 +179,39 @@ def main():
 
         for item in unused:
             try:
-                item.unlink()
-                if args.verbose:
-                    print(f" {CLR['FAIL']}DELETED{CLR['ENDC']} {item.name}")
+                if args.dry_run:
+                    print(f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would delete: {item.name}")
+                else:
+                    item.unlink()
+                    if args.verbose:
+                        print(f" {CLR['FAIL']}DELETED{CLR['ENDC']} {item.name}")
             except Exception as e:
-                print(
-                    f" {CLR['FAIL']}ERROR{CLR['ENDC']} Could not delete {item.name}: {e}"
-                )
-        print(f"{CLR['GREEN']}Cleanup complete.{CLR['ENDC']}")
+                print(f" {CLR['FAIL']}ERROR{CLR['ENDC']} Could not process {item.name}: {e}")
+        
+        if not args.dry_run:
+            print(f"{CLR['GREEN']}Cleanup complete.{CLR['ENDC']}")
 
     elif args.move_to:
-        move_dir = Path(args.move_to)
-        move_dir.mkdir(parents=True, exist_ok=True)
+        move_base = Path(args.move_to).resolve()
         for item in unused:
             try:
-                shutil.move(str(item), str(move_dir / item.name))
-                if args.verbose:
-                    print(f" {CLR['GREEN']}MOVED{CLR['ENDC']} {item.name}")
+                rel_to_img_dir = item.relative_to(img_dir)
+                dest_path = move_base / rel_to_img_dir
+                
+                if args.dry_run:
+                    print(f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would move: {rel_to_img_dir} -> {dest_path}")
+                else:
+                    dest_path.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(item), str(dest_path))
+                    if args.verbose:
+                        print(f" {CLR['GREEN']}MOVED{CLR['ENDC']} {rel_to_img_dir}")
             except Exception as e:
-                print(
-                    f" {CLR['FAIL']}ERROR{CLR['ENDC']} Could not move {item.name}: {e}"
-                )
-        print(
-            f"{CLR['GREEN']}Quarantine complete: files moved to {move_dir}{CLR['ENDC']}"
-        )
+                print(f" {CLR['FAIL']}ERROR{CLR['ENDC']} Could not move {item.name}: {e}")
+        
+        if not args.dry_run:
+            print(f"{CLR['GREEN']}Quarantine complete: structure preserved in {move_base}{CLR['ENDC']}")
 
-    return 0
+    return 1
 
 
 if __name__ == "__main__":
