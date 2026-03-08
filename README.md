@@ -35,7 +35,8 @@ usage: latexaudit [-h] [-e EXTENSIONS [EXTENSIONS ...]] [--include INCLUDE [INCL
                   [--exclude EXCLUDE [EXCLUDE ...]] [-m DIR] [-d] [--dry-run] [-y] [-v]
                   [root]
 
-LaTeX Image Auditor Pro - PhD Grade Asset Management
+LaTeX Image Auditor Pro - PhD Grade Asset Management (AI-generated).
+Finds and manipulates unused images in tex files. The program expects the images in 'Images' or 'images' directory.
 
 positional arguments:
   root                  The root directory of the LaTeX project (default: current directory)

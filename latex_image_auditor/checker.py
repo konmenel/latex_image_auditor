@@ -22,7 +22,11 @@ def create_parser():
     verbose logging, file quarantining, and deletion.
     """
     parser = argparse.ArgumentParser(
-        description=f"{CLR['BOLD']}LaTeX Image Auditor Pro{CLR['ENDC']} - PhD Grade Asset Management",
+        description=(
+            f"{CLR['BOLD']}LaTeX Image Auditor Pro{CLR['ENDC']} - PhD Grade Asset Management (AI-generated)."
+            "\nFinds and manipulates unused images in tex files. The program expects the images in "
+            "'Images' or 'images' directory."
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
@@ -118,19 +122,21 @@ def main():
 
     for tf in all_tex_files:
         rel_path = str(tf.relative_to(root))
-        
+
         if args.include:
             if not any(fnmatch.fnmatch(rel_path, pat) for pat in args.include):
                 continue
-        
+
         if args.exclude:
             if any(fnmatch.fnmatch(rel_path, pat) for pat in args.exclude):
                 continue
-                
+
         filtered_tex.append(tf)
 
     if not filtered_tex:
-        print(f"{CLR['FAIL']}Error: No .tex files found after applying filters.{CLR['ENDC']}")
+        print(
+            f"{CLR['FAIL']}Error: No .tex files found after applying filters.{CLR['ENDC']}"
+        )
         return 1
 
     tex_content = ""
@@ -152,7 +158,7 @@ def main():
         if img.stem not in tex_content and img.name not in tex_content:
             unused.append(img)
 
-    # Report and post-check actions 
+    # Report and post-check actions
     if not unused:
         print(
             f"{CLR['GREEN']}{CLR['BOLD']}Success:{CLR['ENDC']} Project is clean. All images are in use."
@@ -166,7 +172,9 @@ def main():
     print("-" * 60)
 
     if args.dry_run:
-        print(f"{CLR['BLUE']}{CLR['BOLD']}DRY RUN MODE ENABLED - No changes will be saved.{CLR['ENDC']}")
+        print(
+            f"{CLR['BLUE']}{CLR['BOLD']}DRY RUN MODE ENABLED - No changes will be saved.{CLR['ENDC']}"
+        )
 
     if args.delete:
         if not args.yes and not args.dry_run:
@@ -180,14 +188,18 @@ def main():
         for item in unused:
             try:
                 if args.dry_run:
-                    print(f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would delete: {item.name}")
+                    print(
+                        f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would delete: {item.name}"
+                    )
                 else:
                     item.unlink()
                     if args.verbose:
                         print(f" {CLR['FAIL']}DELETED{CLR['ENDC']} {item.name}")
             except Exception as e:
-                print(f" {CLR['FAIL']}ERROR{CLR['ENDC']} Could not process {item.name}: {e}")
-        
+                print(
+                    f" {CLR['FAIL']}ERROR{CLR['ENDC']} Could not process {item.name}: {e}"
+                )
+
         if not args.dry_run:
             print(f"{CLR['GREEN']}Cleanup complete.{CLR['ENDC']}")
 
@@ -199,19 +211,27 @@ def main():
                 item_rel_to_img_dir = item.relative_to(img_dir)
                 dest_path = move_base / item_rel_to_img_dir
                 dest_path_rel_to_root = dest_path.relative_to(root)
-                
+
                 if args.dry_run:
-                    print(f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would move: {item_rel_to_root} -> {dest_path_rel_to_root}")
+                    print(
+                        f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would move: {item_rel_to_root} -> {dest_path_rel_to_root}"
+                    )
                 else:
                     dest_path.parent.mkdir(parents=True, exist_ok=True)
                     shutil.move(str(item), str(dest_path))
                     if args.verbose:
-                        print(f" {CLR['GREEN']}MOVED{CLR['ENDC']} {item_rel_to_root} -> {dest_path_rel_to_root}")
+                        print(
+                            f" {CLR['GREEN']}MOVED{CLR['ENDC']} {item_rel_to_root} -> {dest_path_rel_to_root}"
+                        )
             except Exception as e:
-                print(f" {CLR['FAIL']}ERROR{CLR['ENDC']} Could not move {item.name}: {e}")
-        
+                print(
+                    f" {CLR['FAIL']}ERROR{CLR['ENDC']} Could not move {item.name}: {e}"
+                )
+
         if not args.dry_run:
-            print(f"{CLR['GREEN']}Quarantine complete: structure preserved in {move_base}{CLR['ENDC']}")
+            print(
+                f"{CLR['GREEN']}Quarantine complete: structure preserved in {move_base}{CLR['ENDC']}"
+            )
 
     return 0
 
