@@ -1,0 +1,9 @@
+pyproject.toml
+setup.py
+latex_image_auditor/__init__.py
+latex_image_auditor/checker.py
+latex_image_auditor.egg-info/PKG-INFO
+latex_image_auditor.egg-info/SOURCES.txt
+latex_image_auditor.egg-info/dependency_links.txt
+latex_image_auditor.egg-info/entry_points.txt
+latex_image_auditor.egg-info/top_level.txt

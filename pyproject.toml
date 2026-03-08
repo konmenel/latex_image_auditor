@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "latex-image-auditor"
+version = "0.1.0"
+description = "A zero-dependency utility to find unused images in LaTeX projects"
+readme = "README.md"
+authors = [{ name = "Constantinos Menelaou" }]
+requires-python = ">=3.6"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+latexaudit = "latex_image_auditor.checker:main"
+latex-image-auditor = "latex_image_auditor.checker:main"

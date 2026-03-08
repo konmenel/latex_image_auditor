@@ -1,0 +1,3 @@
+[console_scripts]
+latex-image-auditor = latex_image_auditor.checker:main
+latexaudit = latex_image_auditor.checker:main
