@@ -196,7 +196,8 @@ def main():
         for item in unused:
             try:
                 item_rel_to_root = item.relative_to(root)
-                dest_path = move_base / item_rel_to_root
+                item_rel_to_img_dir = item.relative_to(img_dir)
+                dest_path = move_base / item_rel_to_img_dir
                 dest_path_rel_to_root = dest_path.relative_to(root)
                 
                 if args.dry_run:
