@@ -25,7 +25,7 @@ def create_parser():
         description=(
             f"{CLR['BOLD']}LaTeX Image Auditor Pro{CLR['ENDC']} - PhD Grade Asset Management (AI-generated)."
             "\nFinds and manipulates unused images in tex files. The program expects the images in "
-            "'Images' or 'images' directory."
+            "'Images' or 'images' directory by default."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -41,6 +41,12 @@ def create_parser():
         nargs="+",
         default=[".png", ".jpg", ".jpeg", ".pdf", ".svg", ".eps", ".tikz"],
         help="Space-separated list of image extensions to check (e.g. .png .pdf)",
+    )
+    parser.add_argument(
+        "--img-dirs",
+        nargs="+",
+        default=["Images", "images"],
+        help="Space-separated list of directories to search for images",
     )
     parser.add_argument(
         "--include",
@@ -93,26 +99,31 @@ def main():
         print(f"{CLR['FAIL']}Error: '{root}' is not a valid directory.{CLR['ENDC']}")
         return 1
 
-    img_dir = None
-    for folder in ["images", "Image"]:
-        if (root / folder).is_dir():
-            img_dir = root / folder
-            break
-
-    if not img_dir:
-        print(
-            f"{CLR['FAIL']}Error: Could not find 'images/' or 'Image/' in {root}{CLR['ENDC']}"
-        )
-        return 1
-
+    # Feature Completion: Resolve all valid image directories and collect images
+    found_img_dirs = []
+    all_images = []
     exts = {
         e.lower() if e.startswith(".") else f".{e.lower()}" for e in args.extensions
     }
-    all_images = [p for p in img_dir.rglob("*") if p.suffix.lower() in exts]
+
+    for folder_name in args.img_dirs:
+        target_path = root / folder_name
+        if target_path.is_dir():
+            found_img_dirs.append(target_path)
+            # Find images within this specific directory
+            all_images.extend(
+                [p for p in target_path.rglob("*") if p.suffix.lower() in exts]
+            )
+
+    if not found_img_dirs:
+        print(
+            f"{CLR['FAIL']}Error: None of the specified image directories {args.img_dirs} found in {root}{CLR['ENDC']}"
+        )
+        return 1
 
     if not all_images:
         print(
-            f"{CLR['WARNING']}No files with extensions {exts} found in {img_dir}{CLR['ENDC']}"
+            f"{CLR['WARNING']}No files with extensions {exts} found in {args.img_dirs}{CLR['ENDC']}"
         )
         return 0
 
@@ -152,7 +163,9 @@ def main():
 
     # Perform the check
     unused = []
-    print(f"{CLR['CYAN']}Auditing {len(all_images)} assets...{CLR['ENDC']}\n")
+    print(
+        f"{CLR['CYAN']}Auditing {len(all_images)} assets across {len(found_img_dirs)} directories...{CLR['ENDC']}\n"
+    )
 
     for img in all_images:
         if img.stem not in tex_content and img.name not in tex_content:
@@ -189,7 +202,7 @@ def main():
             try:
                 if args.dry_run:
                     print(
-                        f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would delete: {item.name}"
+                        f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would delete: {item.relative_to(root)}"
                     )
                 else:
                     item.unlink()
@@ -207,21 +220,28 @@ def main():
         move_base = Path(args.move_to).resolve()
         for item in unused:
             try:
+                # Find which specific img_dir this file belongs to to maintain relative structure
+                parent_img_dir = next(d for d in found_img_dirs if d in item.parents)
+
                 item_rel_to_root = item.relative_to(root)
-                item_rel_to_img_dir = item.relative_to(img_dir)
-                dest_path = move_base / item_rel_to_img_dir
-                dest_path_rel_to_root = dest_path.relative_to(root)
+                item_rel_to_img_dir = item.relative_to(parent_img_dir)
+
+                # If multiple img_dirs exist, we nest them in the destination to avoid collisions
+                if len(found_img_dirs) > 1:
+                    dest_path = move_base / parent_img_dir.name / item_rel_to_img_dir
+                else:
+                    dest_path = move_base / item_rel_to_img_dir
 
                 if args.dry_run:
                     print(
-                        f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would move: {item_rel_to_root} -> {dest_path_rel_to_root}"
+                        f" {CLR['CYAN']}[DRY-RUN]{CLR['ENDC']} Would move: {item_rel_to_root} -> {dest_path}"
                     )
                 else:
                     dest_path.parent.mkdir(parents=True, exist_ok=True)
                     shutil.move(str(item), str(dest_path))
                     if args.verbose:
                         print(
-                            f" {CLR['GREEN']}MOVED{CLR['ENDC']} {item_rel_to_root} -> {dest_path_rel_to_root}"
+                            f" {CLR['GREEN']}MOVED{CLR['ENDC']} {item_rel_to_root} -> {dest_path}"
                         )
             except Exception as e:
                 print(
@@ -233,7 +253,7 @@ def main():
                 f"{CLR['GREEN']}Quarantine complete: structure preserved in {move_base}{CLR['ENDC']}"
             )
 
-    return 0
+    return 1
 
 
 if __name__ == "__main__":
